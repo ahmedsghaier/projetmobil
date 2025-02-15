@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 class ConnexionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +28,7 @@ class ConnexionActivity : AppCompatActivity() {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
+        val db = Firebase.firestore
         val email : EditText =findViewById(R.id.connexion_email)
         val password : EditText =findViewById(R.id.connexion_password)
         val button_connexion : ImageButton=findViewById(R.id.imageButton4)
@@ -36,7 +39,27 @@ class ConnexionActivity : AppCompatActivity() {
                 Toast.makeText(this, "Vous devez remplir tous les champs", Toast.LENGTH_SHORT).show()
             }
             else{
-                Toast.makeText(this, "Connecte", Toast.LENGTH_SHORT).show()
+                db.collection("users").whereEqualTo("email", txtemail).get()
+                    .addOnSuccessListener { documents ->
+                        if(documents.isEmpty){
+                            Toast.makeText(this,"Email non trouvé",Toast.LENGTH_SHORT).show()
+                        }
+                        else{
+                            for(document in documents){
+                                val pass=document.getString("password")
+                                if(pass==txtpassword){
+                                    Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show()
+                                }
+                                else{
+                                    Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                        }
+                    }
+                    .addOnFailureListener(){
+                        Toast.makeText(this, "Erreur lors de la vérification}", Toast.LENGTH_SHORT).show()
+                    }
             }
         }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
