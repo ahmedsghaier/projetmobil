@@ -14,6 +14,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import java.util.regex.Pattern
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.ktx.firestore
 
 class IncripitionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,41 +35,53 @@ class IncripitionActivity : AppCompatActivity() {
             startActivity(intent)
         }
         val db = Firebase.firestore
-        val button_Inscripition :ImageButton=findViewById(R.id.imageButton3)
-        val nom : EditText =findViewById(R.id.editText_nom)
-        val prenom : EditText =findViewById(R.id.editText_prenom)
-        val email : EditText =findViewById(R.id.editText_email)
-        val password : EditText =findViewById(R.id.editText_password)
-        button_Inscripition.setOnClickListener{
-            val txtnom = nom.text.toString().trim()
-            val txtprenom = prenom.text.toString().trim()
-            val txtemail = email.text.toString().trim()
-            val txtpassword = password.text.toString().trim()
+        var auth = Firebase.auth
+        val buttonInscription: ImageButton = findViewById(R.id.imageButton3)
+        val nom: EditText = findViewById(R.id.editText_nom)
+        val prenom: EditText = findViewById(R.id.editText_prenom)
+        val email: EditText = findViewById(R.id.editText_email)
+        val password: EditText = findViewById(R.id.editText_password)
 
-            if (txtnom.isEmpty() || txtprenom.isEmpty() || txtemail.isEmpty() || txtpassword.isEmpty()) {
-                Toast.makeText(this, "Vous devez remplir tous les champs", Toast.LENGTH_SHORT).show()
-            } else {
-                val usersCollection = db.collection("users")
-                usersCollection.whereEqualTo("email", txtemail).get()
-                    .addOnSuccessListener { documents ->
-                        if (!documents.isEmpty) {
-                            Toast.makeText(this, "L'email existe déjà", Toast.LENGTH_SHORT).show()
-                        }
-                        else {
-                            val user = hashMapOf(
-                                "nom" to txtnom,
-                                "prenom" to txtprenom,
-                                "email" to txtemail,
-                                "password" to txtpassword,
-                                )
-                            usersCollection.add(user)
-                                .addOnSuccessListener {
-                                    Toast.makeText(this, "DocumentSnapshot added ",Toast.LENGTH_SHORT).show()
+        buttonInscription.setOnClickListener {
+            val txtNom = nom.text.toString().trim()
+            val txtPrenom = prenom.text.toString().trim()
+            val txtEmail = email.text.toString().trim()
+            val txtPassword = password.text.toString().trim()
+
+            if (validateInputs(txtNom, txtPrenom, txtEmail, txtPassword)) {
+                auth.createUserWithEmailAndPassword(txtEmail, txtPassword)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val usersCollection = db.collection("users")
+                            usersCollection.whereEqualTo("email", txtEmail).get()
+                                .addOnSuccessListener { documents ->
+                                    if (!documents.isEmpty) {
+                                        Toast.makeText(this, "L'email existe déjà", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        val userId = auth.currentUser?.uid
+                                        val user = hashMapOf(
+                                            "id" to userId,
+                                            "nom" to txtNom,
+                                            "prenom" to txtPrenom,
+                                            "email" to txtEmail,
+                                            "password" to txtPassword
+                                        )
+
+                                        usersCollection.add(user)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(this, "Inscription réussie", Toast.LENGTH_SHORT).show()
+                                            }
+                                            .addOnFailureListener {
+                                                Toast.makeText(this, "Erreur lors de l'ajout du document", Toast.LENGTH_SHORT).show()
+                                            }
+                                    }
                                 }
+                                .addOnFailureListener {
+                                    Toast.makeText(this, "Erreur lors de la vérification de l'email", Toast.LENGTH_SHORT).show()
+                                }
+                        } else {
+                            Toast.makeText(this, " ${task.exception?.message}", Toast.LENGTH_LONG).show()
                         }
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "Error adding document", Toast.LENGTH_SHORT).show()
                     }
             }
         }
@@ -74,5 +90,12 @@ class IncripitionActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+    }
+    private fun validateInputs(nom: String, prenom: String, email: String, password: String): Boolean {
+        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Vous devez remplir tous les champs", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
     }
 }
