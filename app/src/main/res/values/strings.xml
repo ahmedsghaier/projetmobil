@@ -21,4 +21,6 @@
     <string name="page4_but2">Accueil</string>
     <string name="page4_des1">Vous avez deja utilisé tbibi ?</string>
     <string name="page4_des2">En continuant, vous accepter tous les conditions &#10;d’utilisation</string>
+
+    <string name="default_web_client_id">66371435005-29uh9i6m0b9sgf66tfquia8amths5tb6.apps.googleusercontent.com</string>
 </resources>
