@@ -6,7 +6,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -16,10 +15,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 
 class ConnexionActivity : AppCompatActivity() {
@@ -71,6 +67,9 @@ class ConnexionActivity : AppCompatActivity() {
                                 val pass = document.getString("password")
                                 if (pass == txtpassword) {
                                     Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show()
+                                    val intent = Intent(this, ChoixActivity::class.java)
+                                    startActivity(intent)
+                                    finish()
                                 } else {
                                     Toast.makeText(this, "Mot de passe incorrect", Toast.LENGTH_SHORT).show()
                                 }
@@ -121,7 +120,7 @@ class ConnexionActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, MainActivity::class.java)
+                    val intent = Intent(this, ChoixActivity::class.java)
                     startActivity(intent)
                     finish()
                 } else {

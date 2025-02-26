@@ -1,9 +1,7 @@
 package tn.ahm.projetmobile
 
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
@@ -18,11 +16,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import java.util.regex.Pattern
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.ktx.firestore
 
 class IncripitionActivity : AppCompatActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -87,6 +83,9 @@ class IncripitionActivity : AppCompatActivity() {
                                         usersCollection.add(user)
                                             .addOnSuccessListener {
                                                 Toast.makeText(this, "Inscription réussie", Toast.LENGTH_SHORT).show()
+                                                val intent = Intent(this, ChoixActivity::class.java)
+                                                startActivity(intent)
+                                                finish()
                                             }
                                             .addOnFailureListener {
                                                 Toast.makeText(this, "Erreur lors de l'ajout du document", Toast.LENGTH_SHORT).show()
@@ -144,11 +143,10 @@ class IncripitionActivity : AppCompatActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, MainActivity::class.java)
+                    val intent = Intent(this, ChoixActivity::class.java)
                     startActivity(intent)
                     finish()
                 } else {
-                    // If sign in fails, display a message to the user.
                     Toast.makeText(this, "Échec de l'authentification : ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
