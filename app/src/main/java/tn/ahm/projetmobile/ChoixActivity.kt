@@ -17,13 +17,11 @@ class ChoixActivity : AppCompatActivity() {
         val layoutPatient: LinearLayout = findViewById(R.id.layout_patient)
 
         layoutDoctor.setOnClickListener {
-            val intent = Intent(this, MedecinActivity::class.java)
-            startActivity(intent)
+            navigateTo(MedecinActivity::class.java)
         }
 
         layoutPatient.setOnClickListener {
-            val intent = Intent(this, PatientActivity::class.java)
-            startActivity(intent)
+            navigateTo(PatientActivity::class.java)
         }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -31,4 +29,10 @@ class ChoixActivity : AppCompatActivity() {
             insets
         }
     }
+    private fun navigateTo(destination: Class<*>) {
+        val intent = Intent(this, destination)
+        intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+    }
+
 }
