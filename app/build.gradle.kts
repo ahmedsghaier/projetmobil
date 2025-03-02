@@ -54,4 +54,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.play.services.auth)
     implementation (libs.play.services.location)
+    implementation (libs.play.services.maps)
+    implementation (libs.play.services.location.v2101)
+    implementation (libs.firebase.firestore.v2491)
 }

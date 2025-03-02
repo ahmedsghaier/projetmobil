@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.*
@@ -92,6 +93,7 @@ class PatientActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Création du HashMap pour Firestore
             val patient = hashMapOf(
                 "nomPrenom" to nom,
                 "telephone" to tel,
@@ -101,12 +103,35 @@ class PatientActivity : AppCompatActivity() {
                 "genre" to genre
             )
 
+            // Ajout des données dans Firestore
             db.collection("patients")
                 .add(patient)
                 .addOnSuccessListener {
                     showToast("Patient ajouté avec succès !")
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finish()
+
+                    // Convertir l'adresse en coordonnées (latitude, longitude)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val geocoder = Geocoder(this@PatientActivity, Locale.getDefault())
+                        val addresses = geocoder.getFromLocationName(loc, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            val latitude = addresses[0].latitude
+                            val longitude = addresses[0].longitude
+                            val userLocation = LatLng(latitude, longitude)
+
+                            // Lancer MapsActivity après l'ajout du patient
+                            withContext(Dispatchers.Main) {
+                                val intent = Intent(this@PatientActivity, MapsActivity::class.java)
+                                intent.putExtra("specialite", specialite)
+                                intent.putExtra("userLocation", userLocation)
+                                startActivity(intent)
+                                finish() // Fermer l'activité actuelle si nécessaire
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                showToast("Impossible de convertir l'adresse en coordonnées")
+                            }
+                        }
+                    }
                 }
                 .addOnFailureListener {
                     showToast("Erreur lors de l'ajout du patient")
