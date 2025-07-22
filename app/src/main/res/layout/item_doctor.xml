@@ -1,0 +1,98 @@
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@drawable/background_doctor_item">
+
+        <!-- Nom du médecin -->
+        <TextView
+            android:id="@+id/doctorName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nom du médecin"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black" />
+
+        <!-- Adresse du médecin -->
+        <TextView
+            android:id="@+id/doctorAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adresse du médecin"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black" />
+
+        <!-- Distance du médecin -->
+        <TextView
+            android:id="@+id/doctorDistance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Distance : 500 m"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black" />
+
+        <!-- Mode de paiement du médecin -->
+        <TextView
+            android:id="@+id/doctorPaymentMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mode de paiement : Carte bancaire"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black" />
+        <TextView
+            android:id="@+id/doctornumero"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Numéro de téléphone:21324356"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/black" />
+
+        <!-- Détails supplémentaires (cachés par défaut) -->
+        <LinearLayout
+            android:id="@+id/doctorDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/doctorMoreInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Détails supplémentaires ici..."
+                android:textSize="14sp"
+                android:textColor="@color/gray" />
+        </LinearLayout>
+
+        <!-- Bouton pour afficher/masquer les détails -->
+        <ImageButton
+            android:id="@+id/btnInfo"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Voir plus d'infos"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_dialog_info"
+            app:tint="@color/teal_700" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

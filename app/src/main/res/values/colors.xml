@@ -11,4 +11,7 @@
     <color name="gray_light">#E0E0E0</color>
     <color name="grey_black">#7A000000</color>
     <color name="blue_light">#CDEFEB</color>
+    <color name="light_blue">#E3F2FD</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="teal_700">#00796B</color> <!-- Teal foncé -->
 </resources>

@@ -123,6 +123,7 @@ class PatientActivity : AppCompatActivity() {
                                 val intent = Intent(this@PatientActivity, MapsActivity::class.java)
                                 intent.putExtra("specialite", specialite)
                                 intent.putExtra("userLocation", userLocation)
+                                intent.putExtra("patientName", nom)
                                 startActivity(intent)
                                 finish() // Fermer l'activité actuelle si nécessaire
                             }

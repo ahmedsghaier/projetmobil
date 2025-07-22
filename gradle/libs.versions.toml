@@ -1,5 +1,8 @@
 [versions]
 agp = "8.8.0"
+cardview = "1.0.0"
+common = "3.18.4"
+converterGson = "2.9.0"
 firebaseBom = "33.9.0"
 firebaseFirestoreVersion = "24.9.1"
 kotlin = '2.1.0'
@@ -8,6 +11,8 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+kotlinxCoroutinesAndroid = "1.8.0"
+maps = "4.12.4.0"
 material = "1.12.0"
 activity = "1.10.0"
 constraintlayout = "2.2.0"
@@ -16,13 +21,22 @@ firebaseFirestore = "25.1.2"
 firebaseAuthKtx = "23.2.0"
 firebaseAuth = "23.2.0"
 googleGmsGoogleServicesVersion = "4.4.2"
+places = "4.1.0"
+placesVersion = "3.18.4"
 playServicesAuth = "21.3.0"
 playServicesLocation = "21.3.0"
 playServicesLocationVersion = "21.0.1"
 playServicesMaps = "19.1.0"
+recyclerview = "1.4.0"
+retrofit = "2.9.0"
+search = "4.12.4.0"
 
 [libraries]
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
+common = { module = "com.here.android.mpa:common", version.ref = "common" }
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore-v2491 = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestoreVersion" }
@@ -31,16 +45,22 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+maps = { module = "com.here.sdk:maps", version.ref = "maps" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+mpa-places = { module = "com.here.android.mpa:places", version.ref = "placesVersion" }
+places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-location-v2101 = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocationVersion" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+search = { module = "com.here.sdk:search", version.ref = "search" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

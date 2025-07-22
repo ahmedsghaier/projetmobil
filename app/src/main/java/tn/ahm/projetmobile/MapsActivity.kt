@@ -1,11 +1,21 @@
 package tn.ahm.projetmobile
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -15,10 +25,8 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -26,12 +34,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var googleMap: GoogleMap
     private val db = Firebase.firestore
     private var userLocation: LatLng? = null
-
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var doctorAdapter: DoctorAdapter
+    private lateinit var patientName:String
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
         userLocation = intent.getParcelableExtra("userLocation")
+        patientName = intent.getStringExtra("patientName").toString()
 
         if (userLocation == null) {
             showToast("Localisation utilisateur introuvable")
@@ -40,6 +52,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -58,80 +72,100 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val specialite = intent.getStringExtra("specialite")
         if (!specialite.isNullOrEmpty()) {
-            fetchDoctorsBySpeciality(specialite)
+            fetchDoctorsSimultaneously(specialite)
         } else {
             showToast("Aucune spécialité sélectionnée")
             Log.e("MapsActivity", "Spécialité null ou vide")
         }
     }
 
-    private fun fetchDoctorsBySpeciality(specialite: String) {
-        db.collection("medecins")
-            .whereEqualTo("Specialité", specialite)
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    showToast("Aucun médecin trouvé pour cette spécialité")
-                    return@addOnSuccessListener
-                }
+    private fun fetchDoctorsSimultaneously(specialite: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val firebaseDoctors = async { fetchDoctorsFromFirebase(specialite) }
 
-                val doctorsList = mutableListOf<Doctor>()
+            val allDoctors = firebaseDoctors.await()
 
-                // Parcourir chaque document (médecin)
-                for (document in documents) {
-                    val nom = document.getString("nomprenom") ?: "Médecin inconnu"
-                    val doctorAddress = document.getString("adresse") ?: "Adresse inconnue"
-                    val modePaiement = document.getString("mode de paiement") ?: "Mode de paiement inconnu"
-
-                    // Convertir l'adresse en coordonnées GPS (latitude, longitude)
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val doctorLocation = getLatLngFromAddress(doctorAddress)
-
-                        withContext(Dispatchers.Main) {
-                            if (doctorLocation != null) {
-                                // Ajouter le médecin à la liste avec la distance
-                                userLocation?.let { userLoc ->
-                                    val distance = calculateDistance(userLoc, doctorLocation)
-                                    doctorsList.add(Doctor(nom, doctorLocation, distance, doctorAddress, modePaiement))
-                                }
-
-                                // Ajouter un marqueur pour le médecin
-                                googleMap.addMarker(
-                                    MarkerOptions()
-                                        .position(doctorLocation)
-                                        .title("$nom - $doctorAddress")
-                                        .snippet("Mode de paiement : $modePaiement")
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                                )
-                            } else {
-                                Log.e("MapsActivity", "Impossible de convertir l'adresse en coordonnées pour $nom")
-                            }
-                        }
-                    }
-                }
-
-                // Trouver et afficher le médecin le plus proche
-                userLocation?.let {
-                    val closestDoctor = doctorsList.minByOrNull { it.distance }
-                    closestDoctor?.let { doctor ->
-                        showToast("Médecin le plus proche : ${doctor.name} (${doctor.distance} m)")
-
-                        googleMap.addMarker(
-                            MarkerOptions()
-                                .position(doctor.location)
-                                .title("Médecin le plus proche : ${doctor.name}")
-                                .snippet("Mode de paiement : ${doctor.paymentMode}")
-                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                        )
-
-                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(doctor.location, 14f))
-                    }
+            withContext(Dispatchers.Main) {
+                if (allDoctors.isEmpty()) {
+                    showToast("Aucun médecin trouvé.")
+                } else {
+                    displayDoctorsOnMap(allDoctors)
+                    // Afficher les médecins dans le RecyclerView
+                    doctorAdapter = DoctorAdapter(allDoctors,patientName)
+                    recyclerView.adapter = doctorAdapter
                 }
             }
-            .addOnFailureListener {
-                showToast("Erreur lors de la récupération des médecins")
-                Log.e("MapsActivity", "Erreur Firestore", it)
+        }
+    }
+
+    /**
+     * 📌 Recherche des médecins depuis Firebase Firestore
+     */
+    private suspend fun fetchDoctorsFromFirebase(specialite: String): List<Doctor> {
+        val doctorsList = mutableListOf<Doctor>()
+
+        return try {
+            val result = db.collection("medecins")
+                .whereEqualTo("Specialité", specialite)
+                .get()
+                .await()
+
+            if (result.isEmpty) {
+                Log.d("MapsActivity", "Aucun médecin trouvé dans Firebase")
+                return doctorsList
             }
+
+            for (document in result) {
+                val nom = document.getString("nomprenom") ?: "Médecin inconnu"
+                val doctorAddress = document.getString("adresse") ?: "Adresse inconnue"
+                val modePaiement = document.getString("mode de paiement") ?: "Mode de paiement inconnu"
+                val numtel=document.getString("telephone") ?:"Numero de télephone inconnu"
+                val doctorLocation = getLatLngFromAddress(doctorAddress)
+                if (doctorLocation != null) {
+                    val distance = userLocation?.let { calculateDistance(it, doctorLocation) } ?: 0f
+                    doctorsList.add(Doctor(nom, doctorLocation, distance, doctorAddress, modePaiement,numtel))
+                }
+            }
+
+            doctorsList
+        } catch (e: Exception) {
+            Log.e("MapsActivity", "Erreur Firebase", e)
+            doctorsList
+        }
+    }
+
+
+    /**
+     * 📍 Affiche les médecins sur la carte Google Maps
+     */
+    private fun displayDoctorsOnMap(doctors: List<Doctor>) {
+        doctors.forEach { doctor ->
+            googleMap.addMarker(
+                MarkerOptions()
+                    .position(doctor.location)
+                    .title("${doctor.name} - ${doctor.address}")
+                    .snippet("Mode de paiement : ${doctor.paymentMode}")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+            )
+        }
+
+        // 🎯 Affichage du médecin le plus proche
+        userLocation?.let {
+            val closestDoctor = doctors.minByOrNull { it.distance }
+            closestDoctor?.let { doctor ->
+                showToast("Médecin le plus proche : ${doctor.name} (${doctor.distance} m)")
+
+                googleMap.addMarker(
+                    MarkerOptions()
+                        .position(doctor.location)
+                        .title("Médecin le plus proche : ${doctor.name}")
+                        .snippet("Mode de paiement : ${doctor.paymentMode}")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                )
+
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(doctor.location, 14f))
+            }
+        }
     }
 
     private fun calculateDistance(userLocation: LatLng, doctorLocation: LatLng): Float {
@@ -147,29 +181,71 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
+
     private suspend fun getLatLngFromAddress(address: String): LatLng? {
         return try {
             val geocoder = Geocoder(this, Locale.getDefault())
             val addresses = geocoder.getFromLocationName(address, 1)
             if (!addresses.isNullOrEmpty()) {
-                val latitude = addresses[0].latitude
-                val longitude = addresses[0].longitude
-                LatLng(latitude, longitude)
+                LatLng(addresses[0].latitude, addresses[0].longitude)
             } else {
                 null
             }
         } catch (e: Exception) {
-            Log.e("MapsActivity", "Erreur lors de la conversion de l'adresse en coordonnées", e)
+            Log.e("MapsActivity", "Erreur conversion adresse", e)
             null
         }
     }
 }
+class DoctorAdapter(
+    private val doctors: List<Doctor>,
+    private val patientName: String // Ajouter patientName ici
+) : RecyclerView.Adapter<DoctorAdapter.DoctorViewHolder>() {
 
-// Data class pour stocker les informations des médecins
-data  class Doctor(
+    inner class DoctorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val doctorName: TextView = itemView.findViewById(R.id.doctorName)
+        val doctorAddress: TextView = itemView.findViewById(R.id.doctorAddress)
+        val doctorDistance: TextView = itemView.findViewById(R.id.doctorDistance)
+        val doctorPaymentMode: TextView = itemView.findViewById(R.id.doctorPaymentMode)
+        val doctorNumero: TextView = itemView.findViewById(R.id.doctornumero)
+        val btnInfo: ImageButton = itemView.findViewById(R.id.btnInfo) // 🔥 Ajout du bouton info
+    }
+
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DoctorViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_doctor, parent, false)
+        return DoctorViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: DoctorViewHolder, position: Int) {
+        val doctor = doctors[position]
+        holder.doctorName.text = doctor.name
+        holder.doctorAddress.text = doctor.address
+        holder.doctorDistance.text = "Distance : ${doctor.distance} m"
+        holder.doctorPaymentMode.text = "Mode de paiement : ${doctor.paymentMode}"
+        holder.doctorNumero.text="Numéro de télephone: ${doctor.numtel}"
+        holder.btnInfo.setOnClickListener {
+            val context = holder.itemView.context
+            val intent = Intent(context, BookingActivity::class.java).apply {
+                putExtra("doctorName", doctor.name)
+                putExtra("doctorAddress", doctor.address)
+                putExtra("patientName", patientName)
+            }
+            context.startActivity(intent)
+        }
+    }
+
+
+    override fun getItemCount(): Int {
+        return doctors.size
+    }
+}
+// 🎯 Modèle pour stocker les infos des médecins
+data class Doctor(
     val name: String,
     val location: LatLng,
     val distance: Float,
     val address: String,
-    val paymentMode: String
+    val paymentMode: String,
+    val numtel:String
 )

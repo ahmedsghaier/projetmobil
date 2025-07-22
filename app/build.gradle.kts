@@ -57,4 +57,9 @@ dependencies {
     implementation (libs.play.services.maps)
     implementation (libs.play.services.location.v2101)
     implementation (libs.firebase.firestore.v2491)
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation (libs.kotlinx.coroutines.android)
+    implementation (libs.androidx.recyclerview)
+    implementation (libs.androidx.cardview)
 }
